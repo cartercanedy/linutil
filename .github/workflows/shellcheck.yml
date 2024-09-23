@@ -23,8 +23,21 @@ jobs:
 
       - name: Run shellcheck
         run: |
+          error=0
           for file in $(git diff --name-only origin/${{ github.base_ref }} HEAD core/tabs); do
               if [[ "$file" == *.sh ]] && [[ -f "$file" ]]; then
-                  ./shellcheck-v0.10.0/shellcheck -S error "$file"
+                  errors="$(shellcheck -fgcc -Serror "$file" | sed -n 's/\(.\+\)\:\([0-9]\+\)\:\([0-9]\+\)\: \(.*\)/::error file=\1,line=\2,col=\3::\4/p' | sed 's/ /:space:/g')"
+                          # ^--------- emit errors --------^   ^------------------ reformat info into gh action toolkit fn invocation ------------------^   ^ replace spaces  ^
+                  for error in $errors; do
+                      echo "$error" | sed 's/:space:/ /g'
+                      error=1
+                  done
+
+                  errors="$(grep -nP '^\t+\w+' "$file" | sed -n 's,\([0-9]\+\).*,::error file='"$file"'\,line=\1::Found tab indentations,p' | sed 's/ /:space:/g')"
+                  for error in $errors; do
+                      echo "$error" | sed 's/:space:/ /g'
+                      error=1
+                  done
               fi
           done
+          exit $error
