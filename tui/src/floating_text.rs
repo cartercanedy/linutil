@@ -134,7 +134,7 @@ fn get_lines_owned(s: &str) -> Vec<String> {
 
 impl FloatingText {
     pub fn new(text: String, mode: FloatingTextMode) -> Self {
-        let src = get_lines(&text)
+        let src = get_lines(&text.replace("\t", "    "))
             .into_iter()
             .map(|s| s.to_string())
             .collect::<Vec<_>>();
@@ -168,7 +168,7 @@ impl FloatingText {
             Command::None => (0usize, None),
         };
 
-        let src = get_lines_owned(&get_highlighted_string(&src?)?);
+        let src = get_lines_owned(&get_highlighted_string(&src?.replace("\t", "    "))?);
 
         Some(Self {
             src,
