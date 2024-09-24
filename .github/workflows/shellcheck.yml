@@ -16,28 +16,33 @@ jobs:
 
       - name: Download and set up shellcheck
         run : |
-          wget https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz
-          tar -xf shellcheck-v0.10.0.linux.x86_64.tar.xz
-          cd shellcheck-v0.10.0
-          chmod +x shellcheck
+          SC_URL="https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz"
+          curl -fsSL "$SC_URL" | tar -Jx
+          chmod +x "./shellcheck-v0.10.0/shellcheck"
 
       - name: Run shellcheck
         run: |
           error=0
           for file in $(git diff --name-only origin/${{ github.base_ref }} HEAD core/tabs); do
               if [[ "$file" == *.sh ]] && [[ -f "$file" ]]; then
-                  errors="$(shellcheck -fgcc -Serror "$file" | sed -n 's/\(.\+\)\:\([0-9]\+\)\:\([0-9]\+\)\: \(.*\)/::error file=\1,line=\2,col=\3::\4/p' | sed 's/ /:space:/g')"
-                          # ^--------- emit errors --------^   ^------------------ reformat info into gh action toolkit fn invocation ------------------^   ^ replace spaces  ^
-                  for error in $errors; do
+                  sc_output=$(./shellcheck-v0.10.0/shellcheck -fgcc -Serror "$file")
+                  parsed_errors=$(echo -e "$sc_output" | sed -n 's/\(.\+\)\:\([0-9]\+\)\:\([0-9]\+\)\: \(.*\)/::error file=\1,line=\2,col=\3::\4/p')
+                  iter_safe_errors=$(echo "$parsed_errors" | sed 's/ /:space:/g')
+
+                  for error in $iter_safe_errors; do
                       echo "$error" | sed 's/:space:/ /g'
                       error=1
                   done
 
-                  errors="$(grep -nP '^\t+\w+' "$file" | sed -n 's,\([0-9]\+\).*,::error file='"$file"'\,line=\1::Found tab indentations,p' | sed 's/ /:space:/g')"
-                  for error in $errors; do
+                  tabs_detected=$(grep -nP '^\t+\w+' "$file")
+                  parsed_tabs_detected=$(echo "$tabs_detected" | sed -n 's,\([0-9]\+\).*,::error file='"$file"'\,line=\1::Found tab indentations,p')
+                  iter_safe_tabs_detected=$(echo "$parsed_tabs_detected" | sed 's/ /:space:/')
+
+                  for error in $iter_safe_tabs_detected; do
                       echo "$error" | sed 's/:space:/ /g'
                       error=1
                   done
               fi
           done
+
           exit $error
