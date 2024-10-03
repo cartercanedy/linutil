@@ -32,6 +32,7 @@ pub enum FloatingTextMode {
 
 pub struct FloatingText {
     pub src: Vec<String>,
+    name: Option<String>,
     max_line_width: usize,
     v_scroll: usize,
     h_scroll: usize,
@@ -130,7 +131,7 @@ fn get_lines_owned(s: &str) -> Vec<String> {
 }
 
 impl FloatingText {
-    pub fn new(text: String, mode: FloatingTextMode) -> Self {
+    pub fn new(text: String, name: Option<String>, mode: FloatingTextMode) -> Self {
         let src = get_lines(&text)
             .into_iter()
             .map(|s| s.to_string())
@@ -139,6 +140,7 @@ impl FloatingText {
         let max_line_width = max_width!(src);
         Self {
             src,
+            name,
             mode_title: Self::get_mode_title(mode),
             max_line_width,
             v_scroll: 0,
@@ -146,12 +148,17 @@ impl FloatingText {
         }
     }
 
-    pub fn from_command(command: &Command, mode: FloatingTextMode) -> Option<Self> {
+    pub fn from_command(
+        command: &Command,
+        name: Option<String>,
+        mode: FloatingTextMode,
+    ) -> Option<Self> {
         let (max_line_width, src) = match command {
             Command::Raw(cmd) => {
                 // just apply highlights directly
                 (max_width!(get_lines(cmd)), Some(cmd.clone()))
             }
+
             Command::LocalFile { file, .. } => {
                 // have to read from tmp dir to get cmd src
                 let raw = std::fs::read_to_string(file)
@@ -169,6 +176,7 @@ impl FloatingText {
 
         Some(Self {
             src,
+            name,
             mode_title: Self::get_mode_title(mode),
             max_line_width,
             h_scroll: 0,
@@ -211,10 +219,16 @@ impl FloatingText {
 
 impl FloatContent for FloatingText {
     fn top_title(&self) -> Option<Line<'_>> {
-        let title_text = format!(" {} ", self.mode_title);
+        let mut title_text = format!(" {} ", self.mode_title);
+
+        if let Some(ref name) = self.name {
+            title_text = format!("{}- {} ", title_text, name);
+        }
+
         let title_line = Line::from(title_text)
             .centered()
             .style(Style::default().reversed());
+
         Some(title_line)
     }
 

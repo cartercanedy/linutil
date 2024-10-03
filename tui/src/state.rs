@@ -652,9 +652,11 @@ impl AppState {
 
     fn enable_preview(&mut self) {
         if let Some(node) = self.get_selected_node() {
-            if let Some(preview) =
-                FloatingText::from_command(&node.command, FloatingTextMode::Preview)
-            {
+            if let Some(preview) = FloatingText::from_command(
+                &node.command,
+                Some(node.name.clone()),
+                FloatingTextMode::Preview,
+            ) {
                 self.spawn_float(preview, 80, 80);
             }
         }
@@ -662,7 +664,10 @@ impl AppState {
 
     fn enable_description(&mut self) {
         if let Some(command_description) = self.get_selected_description() {
-            let description = FloatingText::new(command_description, FloatingTextMode::Description);
+            let name = self.get_selected_node().map(|node| node.name.clone());
+
+            let description =
+                FloatingText::new(command_description, name, FloatingTextMode::Description);
             self.spawn_float(description, 80, 80);
         }
     }
@@ -728,7 +733,11 @@ impl AppState {
 
     fn toggle_task_list_guide(&mut self) {
         self.spawn_float(
-            FloatingText::new(ACTIONS_GUIDE.to_string(), FloatingTextMode::ActionsGuide),
+            FloatingText::new(
+                ACTIONS_GUIDE.to_string(),
+                None,
+                FloatingTextMode::ActionsGuide,
+            ),
             80,
             80,
         );
