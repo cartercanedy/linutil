@@ -1,7 +1,13 @@
 use std::rc::Rc;
 
 use crate::{
-    confirmation::{ConfirmPrompt, ConfirmStatus}, filter::{Filter, SearchAction}, float::{Float, FloatContent}, floating_text::FloatingText, hint::{create_shortcut_list, Shortcut}, running_command::RunningCommand, theme::Theme
+    confirmation::{ConfirmPrompt, ConfirmStatus},
+    filter::{Filter, SearchAction},
+    float::{Float, FloatContent},
+    floating_text::FloatingText,
+    hint::{create_shortcut_list, Shortcut},
+    running_command::RunningCommand,
+    theme::Theme,
 };
 use crossterm::event::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use ego_tree::NodeId;
