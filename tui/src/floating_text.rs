@@ -213,6 +213,7 @@ impl FloatContent for FloatingText {
 
     fn draw(&mut self, frame: &mut Frame, area: Rect) {
         let Rect { height, .. } = area;
+
         let lines = self
             .src
             .iter()
